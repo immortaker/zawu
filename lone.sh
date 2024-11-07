@@ -1,35 +1,16 @@
 #!/bin/bash  
 
-# 执行 Docker 安装脚本  
-bash <(curl -sSL https://linuxmirrors.cn/docker.sh)  
+#!/bin/bash  
 
-# 等待用户确认安装（输入 Y）  
-read -p "请在安装后输入 Y 以继续: " confirm  
-if [[ "$confirm" != "Y" && "$confirm" != "y" ]]; then  
-    echo "安装未确认，脚本将退出。"  
-    exit 1  
-fi  
+# 修改 sshd_config 以允许 root 登录和密码认证  
+sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config  
+sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config  
 
-# 等待 10 秒  
-sleep 10  
+# 删除 /root/.ssh/authorized_keys 中的特定条目  
+sed -i '/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="echo '\''Please login as the user \"linux1\" rather than the user \"root\".'\'';echo;sleep 10;exit 142"/d' /root/.ssh/authorized_keys  
 
-# 模拟输入 13  
-echo "13" | sudo tee /dev/tty  
+# 重新启动 ssh 服务以应用更改  
+systemctl restart sshd  
 
-# 等待 10 秒  
-sleep 10  
-
-# 模拟输入 1  
-echo "1" | sudo tee /dev/tty  
-
-# 安装 QEMU 和 binfmt-support  
-sudo apt-get install -y qemu-user-static binfmt-support  
-
-# 注册 QEMU 以支持 x86 架构  
-sudo update-binfmts --enable qemu-x86_64  
-sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils  
-sudo systemctl start libvirtd  
-sudo systemctl enable libvirtd  
-
-# 输出完成信息  
-echo "QEMU 和相关组件已安装并启动。"
+# 输出提示信息  
+echo "SSH 配置已更新，特定条目已从 /root/.ssh/authorized_keys 中删除，并已重新启动 SSH 服务。"
