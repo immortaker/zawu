@@ -1,0 +1,10 @@
+[Unit]  
+Description=FRP Client  
+After=network.target  
+
+[Service]  
+ExecStart=/root/frp/frpc -c /root/frp/frpc.toml
+Restart=on-failure  
+
+[Install]  
+WantedBy=multi-user.target
